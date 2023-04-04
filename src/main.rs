@@ -1,10 +1,4 @@
-use sqlite_loadable::prelude::*;
-use sqlite_loadable::{api, define_scalar_function, Result};
-
-pub fn similarity(context: *mut sqlite3_context, values: &[*mut sqlite3_value]) -> Result<()> {
-    let s1 = api::value_text(values.get(0).unwrap())?;
-    let s2 = api::value_text(values.get(1).unwrap())?;
-
+fn similarity(s1: &str, s2: &str) -> f64 {
     let length: u32 = (s1.chars().count() + s2.chars().count()) as u32;
     let mut matches: u32 = 0;
 
@@ -17,10 +11,9 @@ pub fn similarity(context: *mut sqlite3_context, values: &[*mut sqlite3_value]) 
         let mut s2_max_start_index = 0;
         let mut max_common_length = 0;
 
-        for i in 0..s1.len() - max_common_length {
+        for i in 0..s1.len() {
             let mut s1_start_index = i;
             let ch: char = s1.chars().nth(s1_start_index).unwrap();
-
             let mut s2_start_index = match s2.chars().position(|c| c == ch) {
                 Some(i) => i,
                 None => continue
@@ -46,7 +39,7 @@ pub fn similarity(context: *mut sqlite3_context, values: &[*mut sqlite3_value]) 
             let length = s1_start_index - i;
 
             if length > max_common_length {
-                s1_max_start_index = s1_start_index - length;
+                s1_max_start_index = i;
                 s2_max_start_index = s2_start_index - length;
                 max_common_length = length;
             }
@@ -66,13 +59,14 @@ pub fn similarity(context: *mut sqlite3_context, values: &[*mut sqlite3_value]) 
         queue.push(&s2[s2_max_start_index + max_common_length..]);
     }
 
-    api::result_double(context, (2.0 * matches as f64 / length as f64).into());
-
-    Ok(())
+    return 2.0 * matches as f64 / length as f64;
 }
 
-#[sqlite_entrypoint]
-pub fn sqlite3_gestaltsimilarity_init(db: *mut sqlite3) -> Result<()> {
-    define_scalar_function(db, "similarity", 2, similarity, FunctionFlags::UTF8 | FunctionFlags::DETERMINISTIC)?;
-    Ok(())
+fn main() {
+    let start = std::time::Instant::now();
+    let sim = similarity("Ebojfm Mzpm", "Ebfo ef Mfpo");
+    let end = std::time::Instant::now();
+
+    dbg!(&sim);
+    println!("Elapsed time: {:?}", end - start);
 }

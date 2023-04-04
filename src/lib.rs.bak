@@ -20,7 +20,6 @@ pub fn similarity(context: *mut sqlite3_context, values: &[*mut sqlite3_value]) 
         for i in 0..s1.len() - max_common_length {
             let mut s1_start_index = i;
             let ch: char = s1.chars().nth(s1_start_index).unwrap();
-
             let mut s2_start_index = match s2.chars().position(|c| c == ch) {
                 Some(i) => i,
                 None => continue
