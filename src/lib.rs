@@ -13,56 +13,56 @@ pub fn similarity(context: *mut sqlite3_context, values: &[*mut sqlite3_value]) 
         let s2 = queue.pop().unwrap();
         let s1 = queue.pop().unwrap();
 
-        let mut max_index_1 = 0;
-        let mut max_index_2 = 0;
-        let mut max_length = 0;
+        let mut s1_max_start_index = 0;
+        let mut s2_max_start_index = 0;
+        let mut max_common_length = 0;
 
         for i in 0..s1.len() {
-            let mut index1 = i;
-            let ch: char = s1.chars().nth(index1).unwrap();
-            let mut index2 = match s2.chars().position(|c| c == ch) {
+            let mut s1_start_index = i;
+            let ch: char = s1.chars().nth(s1_start_index).unwrap();
+            let mut s2_start_index = match s2.chars().position(|c| c == ch) {
                 Some(i) => i,
                 None => continue
             };
 
             loop {
-                let s1_char = match s1.char_indices().nth(index1) {
+                let s1_char = match s1.char_indices().nth(s1_start_index) {
                     Some(t) => t.1,
                     None => break
                 };
 
-                let s2_char = match s2.char_indices().nth(index2) {
+                let s2_char = match s2.char_indices().nth(s2_start_index) {
                     Some(t) => t.1,
                     None => break
                 };
 
                 if s1_char != s2_char { break }
 
-                index1 += 1;
-                index2 += 1;
+                s1_start_index += 1;
+                s2_start_index += 1;
             }
 
-            let length = index1 - i;
+            let length = s1_start_index - i;
 
-            if length > max_length {
-                max_index_1 = i;
-                max_index_2 = index2 - length;
-                max_length = length;
+            if length > max_common_length {
+                s1_max_start_index = i;
+                s2_max_start_index = s2_start_index - length;
+                max_common_length = length;
             }
         }
 
-        if max_length == 0 { continue }
+        if max_common_length == 0 { continue }
 
-        matches += max_length as u32;
+        matches += max_common_length as u32;
 
-        max_index_1 = s1.char_indices().nth(max_index_1).unwrap().0;
-        max_index_2 = s2.char_indices().nth(max_index_2).unwrap().0;
+        s1_max_start_index = s1.char_indices().nth(s1_max_start_index).unwrap().0;
+        s2_max_start_index = s2.char_indices().nth(s2_max_start_index).unwrap().0;
 
-        queue.push(&s1[0..max_index_1]);
-        queue.push(&s2[0..max_index_2]);
+        queue.push(&s1[0..s1_max_start_index]);
+        queue.push(&s2[0..s2_max_start_index]);
 
-        queue.push(&s1[max_index_1 + max_length..]);
-        queue.push(&s2[max_index_2 + max_length..]);
+        queue.push(&s1[s1_max_start_index + max_common_length..]);
+        queue.push(&s2[s2_max_start_index + max_common_length..]);
     }
 
     api::result_double(context, (2.0 * matches as f64 / length as f64).into());
