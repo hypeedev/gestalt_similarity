@@ -1,5 +1,4 @@
-# gestalt_similarity
-Gestalt similarity extension for SQLite3
+# Gestalt similarity
 
 ## Building from source
 ```
