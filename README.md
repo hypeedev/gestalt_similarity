@@ -1,4 +1,4 @@
-# Gestalt similarity
+# Gestalt similarity SQLite3 extension
 
 ## Building from source
 ```
